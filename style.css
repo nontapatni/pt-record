@@ -1,0 +1,21 @@
+/* style.css: Tailwind CSS Customizations */
+
+body {
+font-family: 'Inter', sans-serif;
+background-color: #f7f9fb;
+}
+.form-input {
+/* Tailwind classes for input styling /
+@apply w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm;
+}
+.case-card {
+/ Custom border for type differentiation /
+border-left-width: 6px;
+transition: all 0.2s ease-in-out;
+}
+.case-card.ipd { border-left-color: #ef4444; / Red-500 / }
+.case-card.opd { border-left-color: #10b981; / Emerald-500 */ }
+.case-card:hover {
+transform: translateY(-2px);
+box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
