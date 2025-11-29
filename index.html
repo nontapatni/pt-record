@@ -54,7 +54,7 @@
                     
                     <div id="loginMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
 
-                    <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">
+                    <button type="submit" id="loginButton" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">
                         เข้าสู่ระบบ
                     </button>
                 </form>
@@ -131,7 +131,7 @@
 
             <!-- Records List Section -->
             <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">รายการเคสที่บันทึกไว้</h2>
+                <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">รายการเคสที่บันทึกไว้ (ส่วนตัว)</h2>
                 <div id="recordsList" class="space-y-4">
                     <p class="text-center text-gray-500" id="loadingMessage">กำลังโหลดข้อมูล...</p>
                     <!-- Records will be injected here -->
@@ -147,7 +147,6 @@
         import { 
             getAuth, 
             signInAnonymously, 
-            signInWithCustomToken, 
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
@@ -159,17 +158,30 @@
             orderBy, 
             serverTimestamp,
             deleteDoc,
-            doc
+            doc,
+            setLogLevel
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ตั้งค่า Logging ให้แสดงผล
         setLogLevel('Debug');
 
-        // Global Variables ที่จำเป็นจาก Canvas Environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // ***************************************************************
+        // *** ส่วนที่ต้องแก้ไขเมื่อใช้ภายนอก CANVAS ***
+        // ***************************************************************
+
+        // 1. กำหนด Project ID และ Config (แทนที่ค่า YOUR_... ด้วยค่าจริงจาก Firebase Console ของคุณ)
+        const appId = 'pt-record-78ade'; // ID ทดแทนสำหรับใช้ใน Collection Path (ใช้ projectId เพื่อให้เป็นค่าเฉพาะ)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEieoD4VojMcybDg_34-YoEM2d7s6JHPs", 
+            authDomain: "pt-record-78ade.firebaseapp.com",
+            projectId: "pt-record-78ade",
+            storageBucket: "pt-record-78ade.firebasestorage.app",
+            messagingSenderId: "821422410802",
+            appId: "1:821422410802:web:fcbf85eeba91dba1c5002b"
+        };
+        // 2. ลบการพึ่งพาตัวแปร Canvas: __initial_auth_token และ __firebase_config ออกจากโค้ด
+        
+        // ***************************************************************
 
         let app, db, auth, userId = null;
         let isAuthReady = false; // สถานะการเชื่อมต่อ Firebase Auth
@@ -180,6 +192,7 @@
         const appScreen = document.getElementById('appScreen');
         const loginForm = document.getElementById('loginForm');
         const loginMessage = document.getElementById('loginMessage');
+        const loginButton = document.getElementById('loginButton');
 
         const recordForm = document.getElementById('recordForm');
         const recordsList = document.getElementById('recordsList');
@@ -189,12 +202,21 @@
         const messageBox = document.getElementById('messageBox');
         const saveButton = document.getElementById('saveButton');
 
-        // Firestore Collection Path (Public data for sharing)
-        const COLLECTION_PATH = `artifacts/${appId}/public/data/patient_records`;
-
         // Hardcoded credentials for simulated login (Not secure, for demo only)
         const SIMULATED_USERNAME = 'medstudent';
         const SIMULATED_PASSWORD = 'casefile123';
+
+        /**
+         * กำหนดเส้นทางคอลเลกชัน Firestore ที่เป็นส่วนตัว (Private Data Path)
+         * Path: /artifacts/{appId}/users/{userId}/patient_records
+         */
+        function getRecordsCollectionRef() {
+            if (!db || !userId) {
+                return collection(db, `artifacts/${appId}/temp/patient_records`); 
+            }
+            const PRIVATE_PATH = `artifacts/${appId}/users/${userId}/patient_records`;
+            return collection(db, PRIVATE_PATH);
+        }
 
         // ------------------ UTILITY FUNCTIONS ------------------
 
@@ -235,6 +257,7 @@
             const badgeColor = isIPD ? 'bg-red-500' : 'bg-green-500';
             const dateText = record.timestamp ? formatDate(record.timestamp.toDate()) : 'N/A';
             const recordDate = record.date || 'ไม่ระบุ';
+            const shortUserId = record.userId ? record.userId.substring(0, 8) + '...' : 'Unknown'; 
 
             // Card structure
             return `
@@ -258,7 +281,7 @@
                         <p><span class="font-medium text-gray-700">Dx:</span> ${record.dx}</p>
                     </div>
                     <p class="text-xs text-gray-400 mt-3 border-t pt-2">
-                        บันทึกโดย ${record.userId.substring(0, 8)}... เมื่อ: ${dateText}
+                        บันทึกโดย ${shortUserId} เมื่อ: ${dateText}
                     </p>
                 </div>
             `;
@@ -271,6 +294,7 @@
          */
         function showAppScreen() {
             if (isAuthReady && isLoggedIn) {
+                console.log("[App Ready] แสดงหน้าแอปหลักและเริ่มโหลดข้อมูล!");
                 loginScreen.classList.add('hidden');
                 appScreen.classList.remove('hidden');
                 loadRecords(); // เริ่มโหลดข้อมูลเมื่อพร้อม
@@ -281,34 +305,41 @@
          * เริ่มต้นการทำงานของ Firebase และการยืนยันตัวตน
          */
         async function initializeAppAndAuth() {
-            if (Object.keys(firebaseConfig).length === 0) {
-                showMessage(loginMessage, "Error: Firebase config หายไป", "red");
+            if (!firebaseConfig.projectId || firebaseConfig.projectId === "YOUR_PROJECT_ID") {
+                showMessage(loginMessage, "Error: กรุณากำหนดค่า Firebase Config ในโค้ด!", "red");
                 return;
             }
+            console.log("[Firebase] เริ่มต้นการเชื่อมต่อ Firebase");
 
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
+            
+            // 1. ลงชื่อเข้าใช้แบบ Anonymous ทันที (เพื่อให้ได้ userId สำหรับ Private Data)
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Error signing in anonymously:", error);
+                showMessage(loginMessage, "Error: ไม่สามารถลงชื่อเข้าใช้ Firebase (Anon Sign-in ล้มเหลว)", "red");
+            }
 
-            // 1. ตรวจสอบสถานะการยืนยันตัวตน Firebase Auth
-            onAuthStateChanged(auth, async (user) => {
+
+            // 2. ตรวจสอบสถานะการยืนยันตัวตน Firebase Auth
+            onAuthStateChanged(auth, (user) => {
                 if (user) {
                     userId = user.uid;
-                    userIdDisplay.textContent = `User ID: ${userId}`;
                     isAuthReady = true;
+                    console.log(`[Firebase Auth] ลงชื่อเข้าใช้สำเร็จ User ID: ${userId}`);
+                    userIdDisplay.textContent = `User ID: ${userId}`;
                     showAppScreen(); // พยายามแสดงหน้าแอป หากผ่าน Simulated Login แล้ว
                 } else {
-                    // 2. ลงชื่อเข้าใช้ (ใช้ Custom Token หรือ Anonymous)
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Error signing in:", error);
-                        showMessage(loginMessage, "Error: ไม่สามารถเชื่อมต่อ Firebase", "red");
-                        isAuthReady = true;
+                    // หาก sign out (ไม่น่าจะเกิดขึ้นในแอปนี้)
+                    isAuthReady = false; 
+                    userId = null;
+                    if (isLoggedIn) {
+                        showMessage(loginMessage, "การเชื่อมต่อฐานข้อมูลหลุด กรุณาลองเข้าสู่ระบบอีกครั้ง", "red");
+                        loginButton.disabled = false;
+                        loginButton.textContent = "เข้าสู่ระบบ";
                     }
                 }
             });
@@ -342,7 +373,8 @@
             };
 
             try {
-                await addDoc(collection(db, COLLECTION_PATH), data);
+                // ใช้งาน getRecordsCollectionRef() เพื่อให้ได้ Collection ที่เป็นของผู้ใช้คนนี้
+                await addDoc(getRecordsCollectionRef(), data);
                 recordForm.reset();
                 document.getElementById('recordDate').valueAsDate = new Date(); 
                 showMessage(messageBox, "บันทึกเคสสำเร็จ!", "green");
@@ -366,7 +398,8 @@
 
             if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบเคสนี้?")) {
                 try {
-                    await deleteDoc(doc(db, COLLECTION_PATH, id));
+                    const collectionRef = getRecordsCollectionRef();
+                    await deleteDoc(doc(collectionRef, id)); // ลบจาก Collection ส่วนตัว
                     showMessage(messageBox, "ลบเคสสำเร็จ!", "green");
                 } catch (error) {
                     console.error("Error deleting document: ", id, error);
@@ -381,7 +414,8 @@
         function loadRecords() {
             if (!isAuthReady || !userId || !db) return;
 
-            const q = query(collection(db, COLLECTION_PATH), orderBy("timestamp", "desc"));
+            const collectionRef = getRecordsCollectionRef();
+            const q = query(collectionRef, orderBy("timestamp", "desc")); // ดึงข้อมูลจาก Collection ส่วนตัว
 
             onSnapshot(q, (snapshot) => {
                 loadingMessage.classList.add('hidden');
@@ -406,20 +440,49 @@
             });
         }
 
-        // ------------------ LOGIN HANDLER ------------------
+        // ------------------ LOGIN HANDLER (Enhanced Polling) ------------------
 
         function handleLogin(e) {
             e.preventDefault();
+            
+            loginButton.disabled = true;
+            loginButton.textContent = "กำลังตรวจสอบ...";
+
             const usernameInput = document.getElementById('username').value.trim();
             const passwordInput = document.getElementById('password').value.trim();
 
             if (usernameInput === SIMULATED_USERNAME && passwordInput === SIMULATED_PASSWORD) {
                 isLoggedIn = true;
-                showMessage(loginMessage, "เข้าสู่ระบบสำเร็จ! กำลังเชื่อมต่อฐานข้อมูล...", "green");
-                showAppScreen(); // พยายามแสดงหน้าแอป
+                showMessage(loginMessage, "เข้าสู่ระบบสำเร็จ! กำลังเชื่อมต่อฐานข้อมูล...", "yellow");
+                
+                let attempts = 0;
+                const maxAttempts = 10; // ตรวจสอบสูงสุด 10 ครั้ง (รวม 5 วินาที)
+                
+                const checkAuthAndShowApp = () => {
+                    if (isAuthReady) {
+                        // สำเร็จ! Firebase พร้อมแล้ว
+                        showAppScreen();
+                    } else if (attempts < maxAttempts) {
+                        // ยังไม่สำเร็จ ให้รอแล้วลองใหม่
+                        attempts++;
+                        loginButton.textContent = `เชื่อมต่อ Firebase... (${attempts}/${maxAttempts})`;
+                        setTimeout(checkAuthAndShowApp, 500); // ตรวจสอบซ้ำใน 0.5 วินาที
+                    } else {
+                        // ล้มเหลว: Timeout
+                        showMessage(loginMessage, "ข้อผิดพลาด: การเชื่อมต่อฐานข้อมูล Firebase ล้มเหลว (Timeout). ลองใหม่อีกครั้ง.", "red");
+                        loginButton.disabled = false;
+                        loginButton.textContent = "เข้าสู่ระบบ";
+                        isLoggedIn = false; // รีเซ็ตสถานะ Login
+                    }
+                };
+
+                setTimeout(checkAuthAndShowApp, 500); // เริ่มตรวจสอบครั้งแรกหลังจาก 0.5 วินาที
+
             } else {
                 isLoggedIn = false;
                 showMessage(loginMessage, "Username หรือ Password ไม่ถูกต้อง กรุณาลองอีกครั้ง", "red");
+                loginButton.disabled = false;
+                loginButton.textContent = "เข้าสู่ระบบ";
             }
         }
 
