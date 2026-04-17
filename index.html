@@ -6,11 +6,7 @@
     <title>Sx IPD Ward Manager</title>
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-
-    <!-- PWA TEST VERSION -->
     <link rel="manifest" href="/manifest.json">
-
-    <!-- iOS specific -->
     <link rel="apple-touch-icon" href="/icons/icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -18,536 +14,462 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Link to external CSS -->
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-    
-    <!-- 🔒 LOGIN SCREEN -->
-    <div id="auth-screen">
-        <div class="login-card">
-            <div class="login-logo"><i class="fas fa-hospital-user"></i></div>
-            <h2 id="auth-title">เข้าสู่ระบบ (Login)</h2>
-            <p id="auth-subtitle">Sx Ongk RoD</p>
-            
-            <form id="login-form">
-                <div class="form-group">
-                    <input type="text" id="login-username" class="login-input" placeholder="ชื่อผู้ใช้ (Username)" required>
-                </div>
-                <div class="form-group">
-                    <input type="password" id="login-password" class="login-input" placeholder="รหัสผ่าน (Password)" required>
-                </div>
-                <button type="submit" class="btn-login">Login</button>
-            </form>
 
-            <div id="auth-error" class="login-error"></div>
-        </div>
+<!-- LOGIN -->
+<div id="auth-screen">
+    <div class="login-card">
+        <div class="login-logo"><i class="fas fa-hospital-user"></i></div>
+        <h2>เข้าสู่ระบบ (Login)</h2>
+        <p>Sx Ongk RoD</p>
+        <form id="login-form">
+            <div class="form-group">
+                <input type="text" id="login-username" class="login-input" placeholder="ชื่อผู้ใช้ (Username)" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="login-password" class="login-input" placeholder="รหัสผ่าน (Password)" required>
+            </div>
+            <button type="submit" class="btn-login">Login</button>
+        </form>
+        <div id="auth-error" class="login-error"></div>
     </div>
+</div>
 
-    <!-- 🏥 MAIN APP -->
-    <div id="app-container">
-        <div class="container">
-            <header class="main-header">
-                <div class="header-title-group">
-                    <h1>🏥 Sx IPD v1.2</h1>
-                    <div id="rotation-countdown">⏱️ Loading countdown...</div>
-                    <p></p>
-                </div>
-                
-                <div class="header-user-section">
-                    
-                    <div id="user-info"></div>
-                    <div class="header-btn-group">
-                        <button id="open-settings-btn" class="btn-sm" style="display: none; background-color: #34495e; color: white; padding: 8px 12px; font-size: 14px;">
-                            <i class="fas fa-cog"></i> Settings
-                        </button>
+<!-- MAIN APP -->
+<div id="app-container">
+<div class="container">
 
-                        <button id="open-create-user-btn" class="btn-sm btn-add-user" style="display: none; padding: 8px 12px; font-size: 14px;">
-                            <i class="fas fa-user-plus"></i> Add user
-                        </button>
-
-                        <button onclick="window.openChangePasswordModal()" class="btn-sm" style="background-color: #f39c12; color: white; padding: 8px 12px; font-size: 14px;">
-                            <i class="fas fa-key"></i> Change password
-                        </button>
-                        
-                        <button onclick="window.logout()" class="btn-sm btn-delete" style="font-size: 14px; padding: 8px 12px;">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- 📊 SUMMARY TABLE -->
-            <div id="summary-section" style="margin-bottom: 20px;">
-                <div class="card summary-card-style" style="border-left: 4px solid #27ae60;">
-                    <div style="padding-bottom: 10px; font-weight: bold; color: #555; border-bottom: 1px solid #eee; margin-bottom: 10px;">
-                        <i class="fas fa-chart-bar"></i> Summary stat
-                    </div>
-                    <table id="summary-table">
-                        <thead>
-                            <tr style="background-color: transparent;">
-                                <th>Member</th>
-                                <th style="text-align: center; color: #27ae60;">Active cases<br><span id="total-active-count"></span></th>
-                                <th style="text-align: center; color: #7f8c8d;">Total Cases<br><span id="total-all-count"></span></th>
-                            </tr>
-                        </thead>
-                        <tbody id="summary-list">
-                            <tr><td colspan="3" style="text-align:center;">Loading stats...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 🧾 QUEUE VIEW
-            <div id="queue-section" style="margin-bottom: 20px;">
-                <div class="card summary-card-style" style="border-left: 4px solid #2980b9;">
-                    <div style="
-                        padding-bottom: 10px;
-                        font-weight: bold;
-                        color: #555;
-                        border-bottom: 1px solid #eee;
-                        margin-bottom: 10px;
-                    ">
-                        <i class="fas fa-list-ol"></i> Queue
-                    </div>
-
-                    <div id="queue-list" style="
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 10px;
-                        font-size: 15px;
-                    ">
-                        <span style="color:#999;">Loading queue...</span>
-                    </div>
-                </div>
-            </div> -->
-
-            <!-- 📝 LOG BOOK STAT (NEW SECTION) -->
-            <div id="logbook-section" style="margin-bottom: 20px;">
-                <div class="card summary-card-style" style="border-left: 4px solid #8e44ad;">
-                    <!-- ปรับส่วนหัวให้มีปุ่ม Toggle -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
-                        <div style="font-weight: bold; color: #555;">
-                            <i class="fas fa-clipboard-list"></i> Log book stat
-                        </div>
-                        <button id="toggle-logbook-btn" class="btn-sm" style="background: none; border: none; color: #999; font-size: 14px; cursor: pointer;" title="Show/Hide">
-                            <i class="fas fa-chevron-up"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- ห่อตารางไว้ใน div เพื่อซ่อน/แสดง -->
-                    <div id="logbook-content" style="overflow-x: auto;">
-                        <table id="logbook-table">
-                            <thead>
-                                <tr style="background-color: transparent;">
-                                    <th>Member</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Foley</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Stomal care</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Short/Off drain</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Suture</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Off stitch/staple</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Scrub</th>
-                                    <th style="text-align: center; color: #7f8c8d;">Assist</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logbook-list">
-                                <tr><td colspan="8" style="text-align:center;">Loading logbook...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB NAVIGATION -->
-            <div class="nav-tabs">
-                <button class="tab-btn active" onclick="window.switchTab('patients')">
-                    <i class="fas fa-procedures"></i> All Patients
+    <!-- HEADER -->
+    <header class="main-header">
+        <div class="header-title-group">
+            <h1>🏥 Sx IPD v1.2</h1>
+            <div id="rotation-countdown">⏱️ Loading countdown...</div>
+        </div>
+        <div class="header-user-section">
+            <div id="user-info"></div>
+            <div class="header-btn-group">
+                <button id="open-settings-btn" class="btn-sm" style="display:none; background:#34495e; color:white; padding:8px 12px; font-size:14px;">
+                    <i class="fas fa-cog"></i> Settings
                 </button>
-                <button id="tab-mypatients" class="tab-btn" onclick="window.switchTab('mypatients')">
-                    <i class="fas fa-user-md"></i> My Patients
+                <button id="open-create-user-btn" class="btn-sm btn-add-user" style="display:none; padding:8px 12px; font-size:14px;">
+                    <i class="fas fa-user-plus"></i> Add user
                 </button>
-                <button class="tab-btn" onclick="window.switchTab('schedule')">
-                    <i class="fas fa-calendar-alt"></i> ตารางเวร
+                <button onclick="window.openChangePasswordModal()" class="btn-sm" style="background:#f39c12; color:white; padding:8px 12px; font-size:14px;">
+                    <i class="fas fa-key"></i> Change password
+                </button>
+                <button onclick="window.logout()" class="btn-sm btn-delete" style="font-size:14px; padding:8px 12px;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </div>
+        </div>
+    </header>
 
-            <!-- ================= PAGE 1: PATIENT LIST ================= -->
-            <div id="patients-view">
-                <div class="controls-bar">
-                    <button id="add-btn" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> New case
-                    </button>
+    <!-- SUMMARY -->
+    <div id="summary-section" style="margin-bottom:20px;">
+        <div class="card summary-card-style" style="border-left:4px solid #27ae60;">
+            <div style="padding-bottom:10px; font-weight:bold; color:#555; border-bottom:1px solid #eee; margin-bottom:10px;">
+                <i class="fas fa-chart-bar"></i> Summary stat
+            </div>
+            <table id="summary-table">
+                <thead>
+                    <tr style="background:transparent;">
+                        <th>Member</th>
+                        <th style="text-align:center; color:#27ae60;">Active cases<br><span id="total-active-count"></span></th>
+                        <th style="text-align:center; color:#7f8c8d;">Total Cases<br><span id="total-all-count"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="summary-list">
+                    <tr><td colspan="3" style="text-align:center;">Loading stats...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-                    <div class="controls-right">
-                        <div class="sort-box">
-                            <i class="fas fa-sort sort-icon"></i>
-                            <select id="sort-patients">
-                                <option value="ward_bed">Sort by Ward → Bed</option>
-                                <option value="bed">Sort by Bed</option>
-                                <option value="date_new">Sort by Admit Date (ใหม่ → เก่า)</option>
-                                <option value="date_old">Sort by Admit Date (เก่า → ใหม่)</option>
-                                <option value="owner_ward">Sort by Owner → Ward</option>
-                            </select>
-                        </div>
-
-                        <div class="search-box">
-                            <i class="fas fa-search search-icon"></i>
-                            <input type="text" id="searchInput" placeholder="HN, Ward, Name, Diagnosis">
-                        </div>
-                    </div>
+    <!-- LOGBOOK STAT -->
+    <div id="logbook-section" style="margin-bottom:20px;">
+        <div class="card summary-card-style" style="border-left:4px solid #8e44ad;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+                <div style="font-weight:bold; color:#555;">
+                    <i class="fas fa-clipboard-list"></i> Log book stat
                 </div>
+                <button id="toggle-logbook-btn" class="btn-sm" style="background:none; border:none; color:#999; font-size:14px; cursor:pointer;">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div id="logbook-content" style="overflow-x:auto;">
+                <table id="logbook-table">
+                    <thead>
+                        <tr style="background:transparent;">
+                            <th>Member</th>
+                            <th style="text-align:center; color:#7f8c8d;">Foley</th>
+                            <th style="text-align:center; color:#7f8c8d;">Stomal care</th>
+                            <th style="text-align:center; color:#7f8c8d;">Short/Off drain</th>
+                            <th style="text-align:center; color:#7f8c8d;">Suture</th>
+                            <th style="text-align:center; color:#7f8c8d;">Off stitch/staple</th>
+                            <th style="text-align:center; color:#7f8c8d;">Scrub</th>
+                            <th style="text-align:center; color:#7f8c8d;">Assist</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logbook-list">
+                        <tr><td colspan="8" style="text-align:center;">Loading logbook...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-                <!-- ✨ NEW CASES (LAST 24H) -->
-                <div class="section-header" style="color: #d35400;">
-                    <i class="fas fa-clock"></i> New Cases (Last 24 Hours)
-                </div>
-                <div class="card" style="border-left: 4px solid #d35400;">
-                    <table id="new-cases-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Ward</th>
-                                <th style="width: 50px;">Bed</th>
-                                <th style="width: 90px;">Date of Admission</th>
-                                <th style="width: 150px;">HN / AN</th>
-                                <th>Patient Info</th>
-                                <th>Diagnosis</th>
-                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
-                                <th style="width: 140px;">Owner</th>
-                                <th>Note</th>
-                                <th style="width: 80px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="new-cases-list">
-                            <tr><td colspan="10" style="text-align:center; color:#999;">No new cases in last 24h</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+    <!-- TABS -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="window.switchTab('patients')">
+            <i class="fas fa-procedures"></i> All Patients
+        </button>
+        <button id="tab-mypatients" class="tab-btn" onclick="window.switchTab('mypatients')">
+            <i class="fas fa-user-md"></i> My Patients
+        </button>
+        <button class="tab-btn" onclick="window.switchTab('schedule')">
+            <i class="fas fa-calendar-alt"></i> ตารางเวร
+        </button>
+    </div>
 
-                <!-- Active Cases -->
-                <div class="section-header"><i class="fas fa-procedures"></i> Active Cases</div>
-                <div class="card">
-                    <table id="active-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Ward</th>
-                                <th style="width: 50px;">Bed</th>
-                                <th style="width: 90px;">Date of Admission</th>
-                                <th style="width: 150px;">HN / AN</th>
-                                <th>Patient Info</th>
-                                <th>Diagnosis</th>
-                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
-                                <th style="width: 140px;">Owner</th>
-                                <th>Note</th>
-                                <th style="width: 80px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patient-list">
-                            <tr><td colspan="10" style="text-align:center;">Loading data...</td></tr>
-                        </tbody>
-                    </table>
+    <!-- PAGE 1: ALL PATIENTS -->
+    <div id="patients-view">
+        <div class="controls-bar">
+            <button id="add-btn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New case
+            </button>
+            <div class="controls-right">
+                <div class="sort-box">
+                    <i class="fas fa-sort sort-icon"></i>
+                    <select id="sort-patients">
+                        <option value="ward_bed">Sort by Ward → Bed</option>
+                        <option value="bed">Sort by Bed</option>
+                        <option value="date_new">Sort by Admit Date (ใหม่ → เก่า)</option>
+                        <option value="date_old">Sort by Admit Date (เก่า → ใหม่)</option>
+                        <option value="owner_ward">Sort by Owner → Ward</option>
+                    </select>
                 </div>
-
-                <!-- Discharged Cases -->
-                <div class="section-header"><i class="fas fa-history"></i> Discharged History</div>
-                <div class="card">
-                    <table id="discharged-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Ward</th>
-                                <th style="width: 50px;">Bed</th>
-                                <th style="width: 90px;">Date of Admission</th>
-                                <th style="width: 150px;">HN / AN</th>
-                                <th>Patient Info</th>
-                                <th>Diagnosis</th>
-                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
-                                <th style="width: 140px;">Owner</th>
-                                <th>Note</th>
-                                <th style="width: 80px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="discharged-list">
-                            <tr><td colspan="10" style="text-align:center; color:#999;">No discharged history</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="text-align: right; margin-top: 20px; padding-bottom: 20px;">
-                    <button id="export-patient-btn" class="btn" style="background-color: #27ae60; color: white;">
-                        <i class="fas fa-file-excel"></i> Export All to Excel
-                    </button>
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="HN, Ward, Name, Diagnosis">
                 </div>
             </div>
+        </div>
 
-            <!-- ================= PAGE 2: MY PATIENTS ================= -->
-            <div id="mypatients-view" style="display: none;">
-                <div class="section-header" style="color: #2980b9;">
-                    <i class="fas fa-user-md"></i> My Active Cases
-                </div>
-                <div class="card">
-                    <table id="mypatients-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Ward</th>
-                                <th style="width: 50px;">Bed</th>
-                                <th style="width: 90px;">Date of Admission</th>
-                                <th style="width: 150px;">HN / AN</th>
-                                <th>Patient Info</th>
-                                <th>Diagnosis</th>
-                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
-                                <th style="width: 140px;">Owner (Staff)</th>
-                                <th>Note</th>
-                                <th style="width: 90px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mypatients-list">
-                            <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="section-header" style="color:#d35400;">
+            <i class="fas fa-clock"></i> New Cases (Last 24 Hours)
+        </div>
+        <div class="card" style="border-left:4px solid #d35400;">
+            <table id="new-cases-table">
+                <thead><tr>
+                    <th style="width:70px;">Ward</th>
+                    <th style="width:50px;">Bed</th>
+                    <th style="width:90px;">Date of Admission</th>
+                    <th style="width:150px;">HN / AN</th>
+                    <th>Patient Info</th>
+                    <th>Diagnosis</th>
+                    <th style="width:140px;">Owner</th>
+                    <th>Note</th>
+                    <th style="width:80px;">Action</th>
+                </tr></thead>
+                <tbody id="new-cases-list">
+                    <tr><td colspan="9" style="text-align:center; color:#999;">No new cases in last 24h</td></tr>
+                </tbody>
+            </table>
+        </div>
 
-                <div class="section-header" style="color: #7f8c8d; margin-top: 30px;">
-                    <i class="fas fa-history"></i> My Discharged History
+        <div class="section-header"><i class="fas fa-procedures"></i> Active Cases</div>
+        <div class="card">
+            <table id="active-table">
+                <thead><tr>
+                    <th style="width:70px;">Ward</th>
+                    <th style="width:50px;">Bed</th>
+                    <th style="width:90px;">Date of Admission</th>
+                    <th style="width:150px;">HN / AN</th>
+                    <th>Patient Info</th>
+                    <th>Diagnosis</th>
+                    <th style="width:140px;">Owner</th>
+                    <th>Note</th>
+                    <th style="width:80px;">Action</th>
+                </tr></thead>
+                <tbody id="patient-list">
+                    <tr><td colspan="9" style="text-align:center;">Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-header"><i class="fas fa-history"></i> Discharged History</div>
+        <div class="card">
+            <table id="discharged-table">
+                <thead><tr>
+                    <th style="width:70px;">Ward</th>
+                    <th style="width:50px;">Bed</th>
+                    <th style="width:90px;">Date of Admission</th>
+                    <th style="width:150px;">HN / AN</th>
+                    <th>Patient Info</th>
+                    <th>Diagnosis</th>
+                    <th style="width:140px;">Owner</th>
+                    <th>Note</th>
+                    <th style="width:80px;">Action</th>
+                </tr></thead>
+                <tbody id="discharged-list">
+                    <tr><td colspan="9" style="text-align:center; color:#999;">No discharged history</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:right; margin-top:20px; padding-bottom:20px;">
+            <button id="export-patient-btn" class="btn" style="background:#27ae60; color:white;">
+                <i class="fas fa-file-excel"></i> Export All to Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- PAGE 2: MY PATIENTS -->
+    <div id="mypatients-view" style="display:none;">
+        <div class="section-header" style="color:#2980b9;">
+            <i class="fas fa-user-md"></i> My Active Cases
+        </div>
+        <div class="card">
+            <table id="mypatients-table">
+                <thead><tr>
+                    <th style="width:70px;">Ward</th>
+                    <th style="width:50px;">Bed</th>
+                    <th style="width:90px;">Date of Admission</th>
+                    <th style="width:150px;">HN / AN</th>
+                    <th>Patient Info</th>
+                    <th>Diagnosis</th>
+                    <th style="width:140px;">Owner (Staff)</th>
+                    <th>Note</th>
+                    <th style="width:90px;">Action</th>
+                </tr></thead>
+                <tbody id="mypatients-list">
+                    <tr><td colspan="9" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-header" style="color:#7f8c8d; margin-top:30px;">
+            <i class="fas fa-history"></i> My Discharged History
+        </div>
+        <div class="card">
+            <table id="mypatients-discharged-table">
+                <thead><tr>
+                    <th style="width:70px;">Ward</th>
+                    <th style="width:50px;">Bed</th>
+                    <th style="width:90px;">Date of Admission</th>
+                    <th style="width:150px;">HN / AN</th>
+                    <th>Patient Info</th>
+                    <th>Diagnosis</th>
+                    <th style="width:140px;">Owner (Staff)</th>
+                    <th>Note</th>
+                    <th style="width:80px;">Action</th>
+                </tr></thead>
+                <tbody id="mypatients-discharged-list">
+                    <tr><td colspan="9" style="text-align:center; color:#999;">No discharged history</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PAGE 3: DUTY SCHEDULE -->
+    <div id="schedule-view" style="display:none;">
+        <div class="controls-bar">
+            <div style="display:flex; gap:10px;">
+                <button id="add-duty-btn" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus"></i> ลงตารางเวร
+                </button>
+                <input type="file" id="excel-file" accept=".xlsx,.xls" style="display:none;">
+                <button id="import-excel-btn" class="btn" style="background:#27ae60; color:white;">
+                    <i class="fas fa-file-excel"></i> Import Excel
+                </button>
+            </div>
+        </div>
+        <div class="card">
+            <table id="schedule-table">
+                <thead><tr>
+                    <th>Date</th>
+                    <th>Ward</th>
+                    <th>ER</th>
+                    <th>Action</th>
+                </tr></thead>
+                <tbody id="duty-list">
+                    <tr><td colspan="4" style="text-align:center;">Loading schedule...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /.container -->
+</div><!-- /#app-container -->
+
+<!-- MODAL: Admit / Edit Patient -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeModal('modal')">&times;</span>
+        <h2 id="modal-title">New case</h2>
+        <form id="admit-form">
+            <input type="hidden" id="edit-doc-id">
+            <div class="form-row">
+                <div class="form-group" style="flex:1.5;">
+                    <label>Ward</label>
+                    <select id="ward" required>
+                        <option value="">- Ward -</option>
+                    </select>
                 </div>
-                <div class="card">
-                    <table id="mypatients-discharged-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 70px;">Ward</th>
-                                <th style="width: 50px;">Bed</th>
-                                <th style="width: 90px;">Date of Admission</th>
-                                <th style="width: 150px;">HN / AN</th>
-                                <th>Patient Info</th>
-                                <th>Diagnosis</th>
-                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
-                                <th style="width: 140px;">Owner (Staff)</th>
-                                <th>Note</th>
-                                <th style="width: 80px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mypatients-discharged-list">
-                            <tr><td colspan="10" style="text-align:center; color:#999;">No discharged history</td></tr>
-                        </tbody>
-                    </table>
+                <div class="form-group" style="flex:1;">
+                    <label>Bed No.</label>
+                    <input type="text" id="bed" placeholder="99">
+                </div>
+                <div class="form-group" style="flex:1.5;">
+                    <label>Admit Date</label>
+                    <input type="date" id="admitDate">
                 </div>
             </div>
-
-            <!-- ================= PAGE 3: DUTY SCHEDULE ================= -->
-            <div id="schedule-view" style="display: none;">
-                <div class="controls-bar">
-                    <div style="display: flex; gap: 10px;">
-                        <button id="add-duty-btn" class="btn btn-primary">
-                            <i class="fas fa-calendar-plus"></i> ลงตารางเวร
-                        </button>
-                        
-                        <input type="file" id="excel-file" accept=".xlsx, .xls" style="display:none;">
-                        <button id="import-excel-btn" class="btn" style="background-color: #27ae60; color: white;">
-                            <i class="fas fa-file-excel"></i> Import Excel
-                        </button>
-                    </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>HN</label>
+                    <input type="text" id="hn" placeholder="69xxxxxx">
                 </div>
-
-                <div class="card">
-                    <table id="schedule-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Ward</th>
-                                <th>ER</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="duty-list">
-                            <tr><td colspan="4" style="text-align:center;">Loading schedule...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="form-group">
+                    <label>AN</label>
+                    <input type="text" id="an" placeholder="69xxxxxx">
                 </div>
             </div>
-
-        </div>
+            <div class="form-group">
+                <label>ชื่อ-สกุล</label>
+                <input type="text" id="name">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number" id="age">
+                </div>
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select id="gender">
+                        <option value="">- select -</option>
+                        <option value="M">ชาย</option>
+                        <option value="F">หญิง</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Diagnosis</label>
+                <input type="text" id="diag" placeholder="e.g. Acute Appendicitis">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Attending (Staff)</label>
+                    <select id="attending">
+                        <option value="">-- Select Staff --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Owner</label>
+                    <select id="owner">
+                        <option value="">-- Select Owner --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Note</label>
+                <textarea id="note" rows="2"></textarea>
+            </div>
+            <button type="submit" id="submit-btn" class="btn btn-submit">Save</button>
+        </form>
     </div>
+</div>
 
-    <!-- Modal 1: Admit Patient -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal('modal')">&times;</span>
-            <h2 id="modal-title">New case</h2>
-            <form id="admit-form">
-                <input type="hidden" id="edit-doc-id">
-                
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1.5;">
-                        <label>Ward</label>
-                        <select id="ward" required>
-                            <option value="" selected>- Ward -</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Bed No.</label>
-                        <input type="text" id="bed" placeholder="99">
-                    </div>
-                    <div class="form-group" style="flex: 1.5;">
-                        <label>Admit Date</label>
-                        <input type="date" id="admitDate">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>HN</label>
-                        <input type="text" id="hn" placeholder="69xxxxxx">
-                    </div>
-                    <div class="form-group">
-                        <label>AN</label>
-                        <input type="text" id="an" placeholder="69xxxxxx">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>ชื่อ-สกุล</label>
-                    <input type="text" id="name">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Age</label>
-                        <input type="number" id="age">
-                    </div>
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select id="gender">
-                            <option value="">- select -</option>
-                            <option value="M">ชาย</option>
-                            <option value="F">หญิง</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Diagnosis</label>
-                    <input type="text" id="diag" placeholder="e.g. Acute Appendicitis">
-                </div>
-
-                <!-- ปรับให้เลือก Staff และ Resident คู่กัน -->
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Attending (Staff)</label>
-                        <select id="attending">
-                            <option value="" selected>-- Select Staff --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Owner</label>
-                        <select id="owner">
-                            <option value="" selected>-- Select Owner --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Note</label>
-                    <textarea id="note" rows="2"></textarea>
-                </div>
-
-                <button type="submit" id="submit-btn" class="btn btn-submit">Save</button>
-            </form>
-        </div>
+<!-- MODAL: Add / Edit Duty -->
+<div id="duty-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeModal('duty-modal')">&times;</span>
+        <h2>ลงตารางเวร</h2>
+        <form id="duty-form">
+            <div class="form-group">
+                <label>วันที่ (Date)</label>
+                <input type="date" id="duty-date" required>
+            </div>
+            <div class="form-group">
+                <label>Ward (เวรวอร์ด)</label>
+                <input type="text" id="duty-ward" placeholder="เช่น Nontapat">
+            </div>
+            <div class="form-group">
+                <label>ER (เวรห้องฉุกเฉิน)</label>
+                <input type="text" id="duty-er" placeholder="เช่น Natapol">
+            </div>
+            <button type="submit" class="btn btn-submit">Save</button>
+        </form>
     </div>
+</div>
 
-    <!-- Modal 2: Add Duty -->
-    <div id="duty-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal('duty-modal')">&times;</span>
-            <h2>ลงตารางเวร</h2>
-            <form id="duty-form">
-                <div class="form-group">
-                    <label>วันที่ (Date)</label>
-                    <input type="date" id="duty-date" required>
-                </div>
-                <div class="form-group">
-                    <label>Ward (เวรวอร์ด)</label>
-                    <input type="text" id="duty-ward" placeholder="เช่น Nontapat">
-                </div>
-                <div class="form-group">
-                    <label>ER (เวรห้องฉุกเฉิน)</label>
-                    <input type="text" id="duty-er" placeholder="เช่น Natapol">
-                </div>
-                <button type="submit" class="btn btn-submit">Save</button>
-            </form>
-        </div>
+<!-- MODAL: Create User (Admin) -->
+<div id="create-user-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeModal('create-user-modal')">&times;</span>
+        <h2 style="color:#8e44ad;"><i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่ (Add Staff)</h2>
+        <form id="create-user-form">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="new-username" placeholder="เช่น resident1" required pattern="[a-zA-Z0-9_]+">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="text" id="new-password" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-submit" style="background:#8e44ad;">สร้างบัญชี</button>
+            <div id="create-user-msg" style="margin-top:10px; font-size:0.9em;"></div>
+        </form>
     </div>
+</div>
 
-    <!-- Modal 3: Create User -->
-    <div id="create-user-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal('create-user-modal')">&times;</span>
-            <h2 style="color: #8e44ad;"><i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่ (Add Staff)</h2>
-            <form id="create-user-form">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="new-username" placeholder="เช่น resident1" required pattern="[a-zA-Z0-9_]+">
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="text" id="new-password" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6">
-                </div>
-                <button type="submit" class="btn btn-submit" style="background-color: #8e44ad;">สร้างบัญชี</button>
-                <div id="create-user-msg" style="margin-top:10px; font-size:0.9em;"></div>
-            </form>
-        </div>
+<!-- MODAL: Change Password -->
+<div id="change-password-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeModal('change-password-modal')">&times;</span>
+        <h2><i class="fas fa-key"></i> เปลี่ยนรหัสผ่าน</h2>
+        <form id="change-password-form">
+            <div class="form-group">
+                <label>รหัสผ่านใหม่ (New Password)</label>
+                <input type="password" id="new-self-password" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-submit" style="background:#f39c12;">บันทึกรหัสผ่านใหม่</button>
+        </form>
     </div>
+</div>
 
-    <!-- Modal 4: Change Password -->
-    <div id="change-password-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal('change-password-modal')">&times;</span>
-            <h2><i class="fas fa-key"></i> เปลี่ยนรหัสผ่าน</h2>
-            <form id="change-password-form">
-                <div class="form-group">
-                    <label>รหัสผ่านใหม่ (New Password)</label>
-                    <input type="password" id="new-self-password" required minlength="6">
-                </div>
-                <button type="submit" class="btn btn-submit" style="background-color: #f39c12;">บันทึกรหัสผ่านใหม่</button>
-            </form>
-        </div>
+<!-- MODAL: Settings (Admin) -->
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="window.closeModal('settings-modal')">&times;</span>
+        <h2 style="color:#34495e;"><i class="fas fa-cog"></i> ตั้งค่า Dropdown</h2>
+        <p style="color:#666; font-size:0.9em; margin-bottom:15px;">แก้ไขรายชื่อ (พิมพ์ 1 ชื่อต่อ 1 บรรทัด)</p>
+        <form id="settings-form">
+            <div class="form-group">
+                <label>รายชื่อ Wards</label>
+                <textarea id="settings-wards" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>รายชื่อ Attending (Staff)</label>
+                <textarea id="settings-attendings" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>รายชื่อ Owner (แพทย์เจ้าของไข้)</label>
+                <textarea id="settings-owners" rows="6"></textarea>
+            </div>
+            <button type="submit" class="btn btn-submit" style="background:#34495e;">บันทึกการตั้งค่า</button>
+        </form>
     </div>
+</div>
 
-    <!-- Modal 5: Settings -->
-    <div id="settings-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="window.closeModal('settings-modal')">&times;</span>
-            <h2 style="color: #34495e;"><i class="fas fa-cog"></i> ตั้งค่า Dropdown</h2>
-            <p style="color:#666; font-size:0.9em; margin-bottom:15px;">แก้ไขรายชื่อ (พิมพ์ 1 ชื่อต่อ 1 บรรทัด)</p>
-            
-            <form id="settings-form">
-                <div class="form-group">
-                    <label>รายชื่อ Wards</label>
-                    <textarea id="settings-wards" rows="4" placeholder=""></textarea>
-                </div>
-                
-                <!-- เพิ่มช่อง Attending -->
-                <div class="form-group">
-                    <label>รายชื่อ Attending (Staff)</label>
-                    <textarea id="settings-attendings" rows="4" placeholder=""></textarea>
-                </div>
+<!-- FOOTER -->
+<div style="text-align:center; margin:40px 0 20px; color:#999; font-size:14px; font-weight:500;">
+    Powered by nontapatni 😘
+</div>
 
-                <div class="form-group">
-                    <label>รายชื่อ Owner (แพทย์เจ้าของไข้)</label>
-                    <textarea id="settings-owners" rows="6" placeholder=""></textarea>
-                </div>
-                <button type="submit" class="btn btn-submit" style="background-color: #34495e;">บันทึกการตั้งค่า</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px; color: #999; font-size: 14px; font-weight: 500;">
-        Powered by nontapatni 😘
-    </div>
-
-    <!-- Link to external JS -->
-    <script type="module" src="script.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
