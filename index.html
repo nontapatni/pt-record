@@ -3,642 +3,551 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPD/OPD Case Record</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-        }
-        .form-input {
-            @apply w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150;
-        }
-        .case-card {
-            border-left-width: 6px;
-            transition: all 0.2s ease-in-out;
-        }
-        .case-card.ipd { border-left-color: #ef4444; /* Red-500 */ }
-        .case-card.opd { border-left-color: #10b981; /* Green-500 */ }
-        .case-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-    </style>
+    <title>Sx IPD Ward Manager</title>
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- PWA TEST VERSION -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- iOS specific -->
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sx IPD">
+
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Link to external CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body class="p-4 md:p-8">
-
-    <div id="app" class="max-w-4xl mx-auto relative">
-        
-        <!-- Language Switcher -->
-        <button id="langToggle" class="absolute top-0 right-0 mt-4 mr-4 bg-gray-200 text-gray-700 hover:bg-gray-300 font-semibold py-1 px-3 rounded-lg text-sm transition duration-150 shadow">
-            EN
-        </button>
-
-        <!-- Login/Signup Screen -->
-        <div id="authScreen" class="flex flex-col items-center justify-center min-h-[60vh]">
-            <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-sm">
-                <h2 id="authTitle" class="text-2xl font-bold text-gray-800 text-center mb-6">เข้าสู่ระบบ</h2>
-                
-                <form id="authForm">
-                    <div class="space-y-4">
-                        <div>
-                            <label id="emailLabel" for="email" class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-                            <input type="email" id="email" class="form-input" placeholder="email@example.com" required>
-                        </div>
-                        <div>
-                            <label id="passwordLabel" for="password" class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
-                            <input type="password" id="password" class="form-input" placeholder="รหัสผ่าน (6 ตัวอักษรขึ้นไป)" required>
-                        </div>
-                    </div>
-                    
-                    <div id="authMessage" class="mt-4 text-center text-sm font-medium hidden"></div>
-
-                    <button type="submit" id="authButton" class="w-full mt-6 bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md">
-                        เข้าสู่ระบบ
-                    </button>
-                </form>
-
-                <button id="toggleMode" class="w-full mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium transition duration-150">
-                    ยังไม่มีบัญชี? สร้างบัญชีใหม่
-                </button>
-            </div>
-        </div>
-
-        <!-- Main Application Screen (Case Record) -->
-        <div id="appScreen" class="hidden">
-            <header class="text-center mb-8">
-                <h1 id="mainTitle" class="text-3xl font-bold text-gray-800">ระบบบันทึกเคสผู้ป่วย IPD/OPD</h1>
-                <p id="userIdDisplay" class="text-sm text-gray-500 mt-2">User ID: N/A</p>
-            </header>
-
-            <!-- Input Form Section -->
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg mb-8">
-                <h2 id="formTitle" class="text-xl font-semibold mb-6 text-blue-600 border-b pb-3">บันทึกข้อมูลเคสใหม่</h2>
-                <form id="recordForm">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- HN / Patient ID -->
-                        <div>
-                            <label id="hnLabel" for="hn" class="block text-sm font-medium text-gray-700 mb-1">รหัสผู้ป่วย (HN)</label>
-                            <input type="text" id="hn" name="hn" class="form-input" placeholder="ตัวอย่าง: 123456" required>
-                        </div>
-
-                        <!-- Full Name -->
-                        <div>
-                            <label id="fullNameLabel" for="fullName" class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
-                            <input type="text" id="fullName" name="fullName" class="form-input" placeholder="ตัวอย่าง: สมชาย ใจดี" required>
-                        </div>
-
-                        <!-- Case Type -->
-                        <div class="md:col-span-2">
-                            <label id="caseTypeLabel" class="block text-sm font-medium text-gray-700 mb-2">ประเภทเคส</label>
-                            <div class="flex space-x-6">
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="caseType" value="IPD" class="text-red-500 focus:ring-red-500 h-4 w-4" required>
-                                    <span id="ipdOption" class="ml-2 text-gray-700 font-medium">IPD (ผู้ป่วยใน)</span>
-                                </label>
-                                <label class="inline-flex items-center">
-                                    <input type="radio" name="caseType" value="OPD" class="text-green-500 focus:ring-green-500 h-4 w-4" required checked>
-                                    <span id="opdOption" class="ml-2 text-gray-700 font-medium">OPD (ผู้ป่วยนอก)</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Chief Complaint (CC) -->
-                        <div class="md:col-span-2">
-                            <label id="ccLabel" for="cc" class="block text-sm font-medium text-gray-700 mb-1">อาการสำคัญ (CC)</label>
-                            <textarea id="cc" name="cc" rows="2" class="form-input" placeholder="ตัวอย่าง: ปวดท้องใต้ลิ้นปี่ 3 วัน ก่อนมา รพ." required></textarea>
-                        </div>
-
-                        <!-- Diagnosis (Dx) -->
-                        <div class="md:col-span-2">
-                            <label id="dxLabel" for="dx" class="block text-sm font-medium text-gray-700 mb-1">การวินิจฉัย (Dx)</label>
-                            <textarea id="dx" name="dx" rows="2" class="form-input" placeholder="ตัวอย่าง: Acute Appendicitis" required></textarea>
-                        </div>
-
-                        <!-- Date -->
-                        <div>
-                            <label id="dateLabel" for="recordDate" class="block text-sm font-medium text-gray-700 mb-1">วันที่รับ/วันที่มาตรวจ</label>
-                            <input type="date" id="recordDate" name="recordDate" class="form-input" required>
-                        </div>
-                    </div>
-
-                    <div class="mt-8">
-                        <button type="submit" id="saveButton" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow-md shadow-blue-200">
-                            บันทึกเคส
-                        </button>
-                        <div id="messageBox" class="mt-3 text-center text-sm font-medium hidden"></div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Records List Section -->
-            <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h2 id="recordsListTitle" class="text-xl font-semibold mb-6 text-gray-800 border-b pb-3">รายการเคสที่บันทึกไว้ (ส่วนตัว)</h2>
-                <div id="recordsList" class="space-y-4">
-                    <p id="loadingMessage" class="text-center text-gray-500">กำลังโหลดข้อมูล...</p>
+<body>
+    
+    <!-- 🔒 LOGIN SCREEN -->
+    <div id="auth-screen">
+        <div class="login-card">
+            <div class="login-logo"><i class="fas fa-hospital-user"></i></div>
+            <h2 id="auth-title">เข้าสู่ระบบ (Login)</h2>
+            <p id="auth-subtitle">Sx Ongk RoD</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="text" id="login-username" class="login-input" placeholder="ชื่อผู้ใช้ (Username)" required>
                 </div>
-                <p id="noRecordsMessage" class="text-center text-gray-500 hidden mt-4">ยังไม่มีการบันทึกเคส</p>
-                <button id="logoutButton" class="w-full mt-6 bg-gray-500 text-white font-semibold py-3 rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
-                    ออกจากระบบ
-                </button>
-            </div>
+                <div class="form-group">
+                    <input type="password" id="login-password" class="login-input" placeholder="รหัสผ่าน (Password)" required>
+                </div>
+                <button type="submit" class="btn-login">Login</button>
+            </form>
+
+            <div id="auth-error" class="login-error"></div>
         </div>
     </div>
 
-    <!-- Firebase SDKs and Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            signOut,
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            query, 
-            onSnapshot, 
-            orderBy, 
-            serverTimestamp,
-            deleteDoc,
-            doc,
-            setLogLevel
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ตั้งค่า Logging
-        setLogLevel('Debug');
-
-        // Global Variables
-        const appId = 'pt-record-78ade'; // ใช้ Project ID แทน appId
-        const firebaseConfig = {
-            apiKey: "AIzaSyDEieoD4VojMcybDg_34-YoEM2d7s6JHPs",
-            authDomain: "pt-record-78ade.firebaseapp.com",
-            projectId: "pt-record-78ade",
-            storageBucket: "pt-record-78ade.firebasestorage.app",
-            messagingSenderId: "821422410802",
-            appId: "1:821422410802:web:fcbf85eeba91dba1c5002b",
-            measurementId: "G-8KWCR1VNGZ"
-        };
-        
-        let app, db, auth, userId = null;
-        let isSignUpMode = false;
-        let currentLang = 'th';
-
-        // Elements
-        const langToggle = document.getElementById('langToggle');
-        const authScreen = document.getElementById('authScreen');
-        const appScreen = document.getElementById('appScreen');
-        const authForm = document.getElementById('authForm');
-        const authTitle = document.getElementById('authTitle');
-        const authButton = document.getElementById('authButton');
-        const toggleMode = document.getElementById('toggleMode');
-        const authMessage = document.getElementById('authMessage');
-        const logoutButton = document.getElementById('logoutButton');
-
-        const recordForm = document.getElementById('recordForm');
-        const recordsList = document.getElementById('recordsList');
-        const loadingMessage = document.getElementById('loadingMessage');
-        const messageBox = document.getElementById('messageBox');
-
-        // Translation Object
-        const translations = {
-            th: {
-                // UI AUTH
-                authTitle: "เข้าสู่ระบบ",
-                authTitleSignup: "สร้างบัญชีใหม่",
-                emailLabel: "อีเมล",
-                passwordLabel: "รหัสผ่าน",
-                authButton: "เข้าสู่ระบบ",
-                authButtonSignup: "สร้างบัญชี",
-                toggleMode: "ยังไม่มีบัญชี? สร้างบัญชีใหม่",
-                toggleModeLogin: "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ",
-                // AUTH PLACEHOLDERS
-                emailPlaceholder: "email@example.com",
-                passwordPlaceholder: "รหัสผ่าน (6 ตัวอักษรขึ้นไป)",
-                // UI MAIN APP
-                mainTitle: "ระบบบันทึกเคสผู้ป่วย IPD/OPD",
-                formTitle: "บันทึกข้อมูลเคสใหม่",
-                hnLabel: "รหัสผู้ป่วย (HN)",
-                fullNameLabel: "ชื่อ-นามสกุล",
-                caseTypeLabel: "ประเภทเคส",
-                ipdOption: "IPD (ผู้ป่วยใน)",
-                opdOption: "OPD (ผู้ป่วยนอก)",
-                ccLabel: "อาการสำคัญ (CC)",
-                dxLabel: "การวินิจฉัย (Dx)",
-                dateLabel: "วันที่รับ/วันที่มาตรวจ",
-                saveButton: "บันทึกเคส",
-                recordsListTitle: "รายการเคสที่บันทึกไว้ (ส่วนตัว)",
-                loadingMessage: "กำลังโหลดข้อมูล...",
-                noRecordsMessage: "ยังไม่มีการบันทึกเคส",
-                logoutButton: "ออกจากระบบ",
-                // APP PLACEHOLDERS
-                hnPlaceholder: "ตัวอย่าง: 123456",
-                fullNamePlaceholder: "ตัวอย่าง: สมชาย ใจดี",
-                ccPlaceholder: "ตัวอย่าง: ปวดท้องใต้ลิ้นปี่ 3 วัน ก่อนมา รพ.",
-                dxPlaceholder: "ตัวอย่าง: Acute Appendicitis",
-                // MESSAGES & ALERTS
-                saving: "กำลังบันทึก...",
-                deleting: "กำลังลบ...",
-                saveSuccess: "บันทึกเคสสำเร็จ!",
-                deleteSuccess: "ลบเคสสำเร็จ!",
-                deleteConfirm: "คุณแน่ใจหรือไม่ว่าต้องการลบเคสนี้?",
-                loginFail: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
-                signupSuccess: "สร้างบัญชีสำเร็จ! กำลังเข้าสู่ระบบ..."
-            },
-            en: {
-                // UI AUTH
-                authTitle: "Sign In",
-                authTitleSignup: "Sign Up",
-                emailLabel: "Email",
-                passwordLabel: "Password",
-                authButton: "Sign In",
-                authButtonSignup: "Sign Up",
-                toggleMode: "Don't have an account? Sign Up",
-                toggleModeLogin: "Already have an account? Sign In",
-                // AUTH PLACEHOLDERS
-                emailPlaceholder: "email@example.com",
-                passwordPlaceholder: "Password (6 characters or more)",
-                // UI MAIN APP
-                mainTitle: "IPD/OPD Patient Case Record System",
-                formTitle: "Record New Case",
-                hnLabel: "Patient ID (HN)",
-                fullNameLabel: "Full Name",
-                caseTypeLabel: "Case Type",
-                ipdOption: "IPD (Inpatient)",
-                opdOption: "OPD (Outpatient)",
-                ccLabel: "Chief Complaint (CC)",
-                dxLabel: "Diagnosis (Dx)",
-                dateLabel: "Date of Admission/Visit",
-                saveButton: "Save Case",
-                recordsListTitle: "Recorded Cases (Private)",
-                loadingMessage: "Loading data...",
-                noRecordsMessage: "No cases recorded yet",
-                logoutButton: "Logout",
-                // APP PLACEHOLDERS
-                hnPlaceholder: "Ex: 123456",
-                fullNamePlaceholder: "Ex: Somchai Jaidee",
-                ccPlaceholder: "Ex: Epigastric pain for 3 days",
-                dxPlaceholder: "Ex: Acute Appendicitis",
-                // MESSAGES & ALERTS
-                saving: "Saving...",
-                deleting: "Deleting...",
-                saveSuccess: "Case saved successfully!",
-                deleteSuccess: "Case deleted successfully!",
-                deleteConfirm: "Are you sure you want to delete this case?",
-                loginFail: "Invalid email or password.",
-                signupSuccess: "Account created successfully! Signing in..."
-            }
-        };
-
-        // ------------------ UTILITY & LANGUAGE FUNCTIONS ------------------
-
-        function getTranslation(key) {
-            return translations[currentLang][key] || translations['th'][key] || key;
-        }
-
-        function updateUI() {
-            const t = translations[currentLang];
-            
-            // Auth Screen Labels
-            authTitle.textContent = isSignUpMode ? t.authTitleSignup : t.authTitle;
-            authButton.textContent = isSignUpMode ? t.authButtonSignup : t.authButton;
-            toggleMode.textContent = isSignUpMode ? t.toggleModeLogin : t.toggleMode;
-            document.getElementById('emailLabel').textContent = t.emailLabel;
-            document.getElementById('passwordLabel').textContent = t.passwordLabel;
-
-            // Auth Screen Placeholders (FIXED)
-            document.getElementById('email').placeholder = t.emailPlaceholder;
-            document.getElementById('password').placeholder = t.passwordPlaceholder;
-
-            // Main App Screen
-            document.getElementById('mainTitle').textContent = t.mainTitle;
-            document.getElementById('formTitle').textContent = t.formTitle;
-            document.getElementById('hnLabel').textContent = t.hnLabel;
-            document.getElementById('fullNameLabel').textContent = t.fullNameLabel;
-            document.getElementById('caseTypeLabel').textContent = t.caseTypeLabel;
-            document.getElementById('ipdOption').textContent = t.ipdOption;
-            document.getElementById('opdOption').textContent = t.opdOption;
-            document.getElementById('ccLabel').textContent = t.ccLabel;
-            document.getElementById('dxLabel').textContent = t.dxLabel;
-            document.getElementById('dateLabel').textContent = t.dateLabel;
-            document.getElementById('saveButton').textContent = t.saveButton;
-            document.getElementById('recordsListTitle').textContent = t.recordsListTitle;
-            document.getElementById('loadingMessage').textContent = t.loadingMessage;
-            document.getElementById('noRecordsMessage').textContent = t.noRecordsMessage;
-            document.getElementById('logoutButton').textContent = t.logoutButton;
-            
-            // App Input Placeholders (FIXED)
-            document.getElementById('hn').placeholder = t.hnPlaceholder;
-            document.getElementById('fullName').placeholder = t.fullNamePlaceholder;
-            document.getElementById('cc').placeholder = t.ccPlaceholder;
-            document.getElementById('dx').placeholder = t.dxPlaceholder;
-
-            // Update language toggle button text
-            langToggle.textContent = currentLang === 'th' ? 'EN' : 'TH';
-
-            // โหลดข้อมูลเคสซ้ำเพื่ออัปเดตภาษาใน Card (ถ้าอยู่ในหน้า App)
-            if (userId) {
-                 loadRecords();
-            }
-        }
-
-        function formatDate(dateObj) {
-            if (!dateObj) return '';
-            try {
-                return dateObj.toLocaleDateString(currentLang === 'th' ? 'th-TH' : 'en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                });
-            } catch (e) {
-                console.error("Error formatting date:", e);
-                return dateObj.toDateString();
-            }
-        }
-
-        function showMessage(element, message, type) {
-            element.textContent = message;
-            element.className = "mt-3 text-center text-sm font-medium p-2 rounded";
-            
-            if (type === 'hidden') {
-                element.classList.add('hidden');
-                return;
-            }
-
-            const baseClasses = {
-                'green': 'text-green-700 bg-green-100',
-                'red': 'text-red-700 bg-red-100',
-                'yellow': 'text-yellow-700 bg-yellow-100',
-            };
-            element.className += ` ${baseClasses[type]}`;
-            element.classList.remove('hidden');
-        }
-
-        // ------------------ FIREBASE FUNCTIONS ------------------
-
-        function getRecordsCollectionRef() {
-            if (!db || !userId) return null;
-            const PRIVATE_PATH = `artifacts/${appId}/users/${userId}/patient_records`;
-            return collection(db, PRIVATE_PATH);
-        }
-
-        async function initializeAppAndAuth() {
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-            } catch(e) {
-                console.error("Firebase Init Error:", e);
-                showMessage(authMessage, `Firebase Initialization Failed: ${e.message}`, "red");
-                return;
-            }
-            
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    document.getElementById('userIdDisplay').textContent = `User ID: ${userId.substring(0, 12)}...`;
-                    authScreen.classList.add('hidden');
-                    appScreen.classList.remove('hidden');
-                    loadRecords();
-                } else {
-                    userId = null;
-                    authScreen.classList.remove('hidden');
-                    appScreen.classList.add('hidden');
-                }
-            });
-        }
-
-        async function handleAuth(e) {
-            e.preventDefault();
-            
-            authButton.disabled = true;
-            authButton.textContent = isSignUpMode ? getTranslation('saving') : getTranslation('authButton');
-            showMessage(authMessage, "", "hidden");
-
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-
-            try {
-                if (isSignUpMode) {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    showMessage(authMessage, getTranslation('signupSuccess'), "green");
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                }
-            } catch (error) {
-                console.error("Auth Error:", error);
-                let message = getTranslation('loginFail');
-                if (error.code === 'auth/weak-password') {
-                    message = currentLang === 'th' ? "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" : "Password should be at least 6 characters.";
-                } else if (error.code === 'auth/email-already-in-use') {
-                     message = currentLang === 'th' ? "อีเมลนี้ถูกใช้สร้างบัญชีไปแล้ว" : "Email already in use.";
-                } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found') {
-                     message = getTranslation('loginFail');
-                } else {
-                    message = currentLang === 'th' ? `เกิดข้อผิดพลาด: ${error.message}` : `Error: ${error.message}`;
-                }
-                showMessage(authMessage, message, "red");
-            } finally {
-                authButton.disabled = false;
-                authButton.textContent = isSignUpMode ? getTranslation('authButtonSignup') : getTranslation('authButton');
-            }
-        }
-
-        async function saveRecord(e) {
-            e.preventDefault();
-
-            if (!userId) {
-                showMessage(messageBox, "กรุณาเข้าสู่ระบบก่อนบันทึก", "red");
-                return;
-            }
-
-            saveButton.disabled = true;
-            saveButton.textContent = getTranslation('saving');
-            showMessage(messageBox, "", "hidden");
-
-            const formData = new FormData(recordForm);
-            const data = {
-                hn: formData.get('hn').trim(),
-                fullName: formData.get('fullName').trim(),
-                caseType: formData.get('caseType'),
-                cc: formData.get('cc').trim(),
-                dx: formData.get('dx').trim(),
-                date: formData.get('recordDate'),
-                userId: userId, 
-                timestamp: serverTimestamp()
-            };
-
-            try {
-                // บันทึกไปยัง Collection ส่วนตัว
-                await addDoc(getRecordsCollectionRef(), data);
-                recordForm.reset();
-                document.getElementById('recordDate').valueAsDate = new Date(); 
-                showMessage(messageBox, getTranslation('saveSuccess'), "green");
-            } catch (error) {
-                console.error("Firestore Save Error:", error);
+    <!-- 🏥 MAIN APP -->
+    <div id="app-container">
+        <div class="container">
+            <header class="main-header">
+                <div class="header-title-group">
+                    <h1>🏥 Sx IPD v1.2</h1>
+                    <div id="rotation-countdown">⏱️ Loading countdown...</div>
+                    <p></p>
+                </div>
                 
-                let errorMessage = currentLang === 'th' ? "เกิดข้อผิดพลาดในการบันทึก" : "Error saving case";
-                if (error.code === 'permission-denied') {
-                    errorMessage = currentLang === 'th' ? "การบันทึกล้มเหลว: Permission Denied (โปรดตรวจสอบ Firestore Security Rules)" : "Save failed: Permission Denied (Check Firestore Security Rules)";
-                } else {
-                    errorMessage += `: ${error.message}`;
-                }
-                
-                showMessage(messageBox, errorMessage, "red");
-            } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = getTranslation('saveButton');
-            }
-        }
-        
-        async function deleteRecord(id) {
-            if (!userId) {
-                showMessage(messageBox, "กรุณาเข้าสู่ระบบก่อน", "red");
-                return;
-            }
+                <div class="header-user-section">
+                    
+                    <div id="user-info"></div>
+                    <div class="header-btn-group">
+                        <button id="open-settings-btn" class="btn-sm" style="display: none; background-color: #34495e; color: white; padding: 8px 12px; font-size: 14px;">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
 
-            const confirmMessage = getTranslation('deleteConfirm');
-            if (window.confirm(confirmMessage)) {
-                try {
-                    const collectionRef = getRecordsCollectionRef();
-                    await deleteDoc(doc(collectionRef, id)); 
-                    showMessage(messageBox, getTranslation('deleteSuccess'), "green");
-                } catch (error) {
-                    console.error("Error deleting document: ", id, error);
-                    let errorMessage = currentLang === 'th' ? "เกิดข้อผิดพลาดในการลบ" : "Error deleting case";
-                    if (error.code === 'permission-denied') {
-                        errorMessage = currentLang === 'th' ? "ล้มเหลว: Permission Denied (ไม่ใช่เคสของคุณ)" : "Failed: Permission Denied (Not your case)";
-                    } else {
-                         errorMessage += `: ${error.message}`;
-                    }
-                    showMessage(messageBox, errorMessage, "red");
-                }
-            }
-        }
+                        <button id="open-create-user-btn" class="btn-sm btn-add-user" style="display: none; padding: 8px 12px; font-size: 14px;">
+                            <i class="fas fa-user-plus"></i> Add user
+                        </button>
 
-        function createRecordCard(record, id) {
-            const isIPD = record.caseType === 'IPD';
-            const badgeColor = isIPD ? 'bg-red-500' : 'bg-green-500';
-            const dateText = record.timestamp ? formatDate(record.timestamp.toDate()) : 'N/A';
-            const recordDate = record.date || 'N/A';
-            const caseTypeText = record.caseType === 'IPD' 
-                               ? (currentLang === 'th' ? "IPD (ผู้ป่วยใน)" : "IPD (Inpatient)")
-                               : (currentLang === 'th' ? "OPD (ผู้ป่วยนอก)" : "OPD (Outpatient)");
-            
-            const deleteTitle = currentLang === 'th' ? "ลบเคส" : "Delete Case";
-            const dateTextLabel = currentLang === 'th' ? "วันที่:" : "Date:";
-            const ccTextLabel = currentLang === 'th' ? "CC:" : "CC:";
-            const dxTextLabel = currentLang === 'th' ? "Dx:" : "Dx:";
-            const recordedBy = currentLang === 'th' ? "บันทึกโดย" : "Recorded by";
+                        <button onclick="window.openChangePasswordModal()" class="btn-sm" style="background-color: #f39c12; color: white; padding: 8px 12px; font-size: 14px;">
+                            <i class="fas fa-key"></i> Change password
+                        </button>
+                        
+                        <button onclick="window.logout()" class="btn-sm btn-delete" style="font-size: 14px; padding: 8px 12px;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
 
-            return `
-                <div class="case-card bg-gray-50 p-4 border-l-4 ${isIPD ? 'border-red-500' : 'border-green-500'} rounded-lg shadow-sm hover:shadow-md transition duration-200">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full text-white ${badgeColor}">
-                            ${caseTypeText}
-                        </span>
-                        <button data-id="${id}" class="delete-btn text-gray-400 hover:text-red-600 transition duration-150 text-xl font-bold leading-none" title="${deleteTitle}">
-                            &times;
+            <!-- 📊 SUMMARY TABLE -->
+            <div id="summary-section" style="margin-bottom: 20px;">
+                <div class="card summary-card-style" style="border-left: 4px solid #27ae60;">
+                    <div style="padding-bottom: 10px; font-weight: bold; color: #555; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                        <i class="fas fa-chart-bar"></i> Summary stat
+                    </div>
+                    <table id="summary-table">
+                        <thead>
+                            <tr style="background-color: transparent;">
+                                <th>Member</th>
+                                <th style="text-align: center; color: #27ae60;">Active cases<br><span id="total-active-count"></span></th>
+                                <th style="text-align: center; color: #7f8c8d;">Total Cases<br><span id="total-all-count"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="summary-list">
+                            <tr><td colspan="3" style="text-align:center;">Loading stats...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 🧾 QUEUE VIEW
+            <div id="queue-section" style="margin-bottom: 20px;">
+                <div class="card summary-card-style" style="border-left: 4px solid #2980b9;">
+                    <div style="
+                        padding-bottom: 10px;
+                        font-weight: bold;
+                        color: #555;
+                        border-bottom: 1px solid #eee;
+                        margin-bottom: 10px;
+                    ">
+                        <i class="fas fa-list-ol"></i> Queue
+                    </div>
+
+                    <div id="queue-list" style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        font-size: 15px;
+                    ">
+                        <span style="color:#999;">Loading queue...</span>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- 📝 LOG BOOK STAT (NEW SECTION) -->
+            <div id="logbook-section" style="margin-bottom: 20px;">
+                <div class="card summary-card-style" style="border-left: 4px solid #8e44ad;">
+                    <!-- ปรับส่วนหัวให้มีปุ่ม Toggle -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px;">
+                        <div style="font-weight: bold; color: #555;">
+                            <i class="fas fa-clipboard-list"></i> Log book stat
+                        </div>
+                        <button id="toggle-logbook-btn" class="btn-sm" style="background: none; border: none; color: #999; font-size: 14px; cursor: pointer;" title="Show/Hide">
+                            <i class="fas fa-chevron-up"></i>
                         </button>
                     </div>
                     
-                    <p class="text-lg font-bold text-gray-800">${record.fullName} (HN: ${record.hn})</p>
-                    
-                    <div class="mt-2 space-y-1 text-sm text-gray-600">
-                        <p><span class="font-medium text-gray-700">${dateTextLabel}</span> ${recordDate}</p>
-                        <p><span class="font-medium text-gray-700">${ccTextLabel}</span> ${record.cc}</p>
-                        <p><span class="font-medium text-gray-700">${dxTextLabel}</span> ${record.dx}</p>
+                    <!-- ห่อตารางไว้ใน div เพื่อซ่อน/แสดง -->
+                    <div id="logbook-content" style="overflow-x: auto;">
+                        <table id="logbook-table">
+                            <thead>
+                                <tr style="background-color: transparent;">
+                                    <th>Member</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Foley</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Stomal care</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Short/Off drain</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Suture</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Off stitch/staple</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Scrub</th>
+                                    <th style="text-align: center; color: #7f8c8d;">Assist</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logbook-list">
+                                <tr><td colspan="8" style="text-align:center;">Loading logbook...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <p class="text-xs text-gray-400 mt-3 border-t pt-2">
-                        ${recordedBy} ${record.userId.substring(0, 8)}... เมื่อ: ${dateText}
-                    </p>
                 </div>
-            `;
-        }
+            </div>
 
-        function loadRecords() {
-            if (!userId || !db) return;
+            <!-- TAB NAVIGATION -->
+            <div class="nav-tabs">
+                <button class="tab-btn active" onclick="window.switchTab('patients')">
+                    <i class="fas fa-procedures"></i> All Patients
+                </button>
+                <button id="tab-mypatients" class="tab-btn" onclick="window.switchTab('mypatients')">
+                    <i class="fas fa-user-md"></i> My Patients
+                </button>
+                <button class="tab-btn" onclick="window.switchTab('schedule')">
+                    <i class="fas fa-calendar-alt"></i> ตารางเวร
+                </button>
+            </div>
 
-            loadingMessage.textContent = getTranslation('loadingMessage');
+            <!-- ================= PAGE 1: PATIENT LIST ================= -->
+            <div id="patients-view">
+                <div class="controls-bar">
+                    <button id="add-btn" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New case
+                    </button>
+
+                    <div class="controls-right">
+                        <div class="sort-box">
+                            <i class="fas fa-sort sort-icon"></i>
+                            <select id="sort-patients">
+                                <option value="ward_bed">Sort by Ward → Bed</option>
+                                <option value="bed">Sort by Bed</option>
+                                <option value="date_new">Sort by Admit Date (ใหม่ → เก่า)</option>
+                                <option value="date_old">Sort by Admit Date (เก่า → ใหม่)</option>
+                                <option value="owner_ward">Sort by Owner → Ward</option>
+                            </select>
+                        </div>
+
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="HN, Ward, Name, Diagnosis">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ✨ NEW CASES (LAST 24H) -->
+                <div class="section-header" style="color: #d35400;">
+                    <i class="fas fa-clock"></i> New Cases (Last 24 Hours)
+                </div>
+                <div class="card" style="border-left: 4px solid #d35400;">
+                    <table id="new-cases-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Ward</th>
+                                <th style="width: 50px;">Bed</th>
+                                <th style="width: 90px;">Date of Admission</th>
+                                <th style="width: 150px;">HN / AN</th>
+                                <th>Patient Info</th>
+                                <th>Diagnosis</th>
+                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
+                                <th style="width: 140px;">Owner</th>
+                                <th>Note</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="new-cases-list">
+                            <tr><td colspan="10" style="text-align:center; color:#999;">No new cases in last 24h</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Active Cases -->
+                <div class="section-header"><i class="fas fa-procedures"></i> Active Cases</div>
+                <div class="card">
+                    <table id="active-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Ward</th>
+                                <th style="width: 50px;">Bed</th>
+                                <th style="width: 90px;">Date of Admission</th>
+                                <th style="width: 150px;">HN / AN</th>
+                                <th>Patient Info</th>
+                                <th>Diagnosis</th>
+                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
+                                <th style="width: 140px;">Owner</th>
+                                <th>Note</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patient-list">
+                            <tr><td colspan="10" style="text-align:center;">Loading data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Discharged Cases -->
+                <div class="section-header"><i class="fas fa-history"></i> Discharged History</div>
+                <div class="card">
+                    <table id="discharged-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Ward</th>
+                                <th style="width: 50px;">Bed</th>
+                                <th style="width: 90px;">Date of Admission</th>
+                                <th style="width: 150px;">HN / AN</th>
+                                <th>Patient Info</th>
+                                <th>Diagnosis</th>
+                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
+                                <th style="width: 140px;">Owner</th>
+                                <th>Note</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="discharged-list">
+                            <tr><td colspan="10" style="text-align:center; color:#999;">No discharged history</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="text-align: right; margin-top: 20px; padding-bottom: 20px;">
+                    <button id="export-patient-btn" class="btn" style="background-color: #27ae60; color: white;">
+                        <i class="fas fa-file-excel"></i> Export All to Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 2: MY PATIENTS ================= -->
+            <div id="mypatients-view" style="display: none;">
+                <div class="section-header" style="color: #2980b9;">
+                    <i class="fas fa-user-md"></i> My Active Cases
+                </div>
+                <div class="card">
+                    <table id="mypatients-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Ward</th>
+                                <th style="width: 50px;">Bed</th>
+                                <th style="width: 90px;">Date of Admission</th>
+                                <th style="width: 150px;">HN / AN</th>
+                                <th>Patient Info</th>
+                                <th>Diagnosis</th>
+                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
+                                <th style="width: 140px;">Owner (Staff)</th>
+                                <th>Note</th>
+                                <th style="width: 90px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mypatients-list">
+                            <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-header" style="color: #7f8c8d; margin-top: 30px;">
+                    <i class="fas fa-history"></i> My Discharged History
+                </div>
+                <div class="card">
+                    <table id="mypatients-discharged-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">Ward</th>
+                                <th style="width: 50px;">Bed</th>
+                                <th style="width: 90px;">Date of Admission</th>
+                                <th style="width: 150px;">HN / AN</th>
+                                <th>Patient Info</th>
+                                <th>Diagnosis</th>
+                                <!-- ลบ Attending แยก แล้วรวมไว้ใน Owner -->
+                                <th style="width: 140px;">Owner (Staff)</th>
+                                <th>Note</th>
+                                <th style="width: 80px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mypatients-discharged-list">
+                            <tr><td colspan="10" style="text-align:center; color:#999;">No discharged history</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 3: DUTY SCHEDULE ================= -->
+            <div id="schedule-view" style="display: none;">
+                <div class="controls-bar">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="add-duty-btn" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> ลงตารางเวร
+                        </button>
+                        
+                        <input type="file" id="excel-file" accept=".xlsx, .xls" style="display:none;">
+                        <button id="import-excel-btn" class="btn" style="background-color: #27ae60; color: white;">
+                            <i class="fas fa-file-excel"></i> Import Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <table id="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Ward</th>
+                                <th>ER</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="duty-list">
+                            <tr><td colspan="4" style="text-align:center;">Loading schedule...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal 1: Admit Patient -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="window.closeModal('modal')">&times;</span>
+            <h2 id="modal-title">New case</h2>
+            <form id="admit-form">
+                <input type="hidden" id="edit-doc-id">
+                
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1.5;">
+                        <label>Ward</label>
+                        <select id="ward" required>
+                            <option value="" selected>- Ward -</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Bed No.</label>
+                        <input type="text" id="bed" placeholder="99">
+                    </div>
+                    <div class="form-group" style="flex: 1.5;">
+                        <label>Admit Date</label>
+                        <input type="date" id="admitDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>HN</label>
+                        <input type="text" id="hn" placeholder="69xxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label>AN</label>
+                        <input type="text" id="an" placeholder="69xxxxxx">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ชื่อ-สกุล</label>
+                    <input type="text" id="name">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="age">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="gender">
+                            <option value="">- select -</option>
+                            <option value="M">ชาย</option>
+                            <option value="F">หญิง</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Diagnosis</label>
+                    <input type="text" id="diag" placeholder="e.g. Acute Appendicitis">
+                </div>
+
+                <!-- ปรับให้เลือก Staff และ Resident คู่กัน -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Attending (Staff)</label>
+                        <select id="attending">
+                            <option value="" selected>-- Select Staff --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Owner</label>
+                        <select id="owner">
+                            <option value="" selected>-- Select Owner --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Note</label>
+                    <textarea id="note" rows="2"></textarea>
+                </div>
+
+                <button type="submit" id="submit-btn" class="btn btn-submit">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Add Duty -->
+    <div id="duty-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="window.closeModal('duty-modal')">&times;</span>
+            <h2>ลงตารางเวร</h2>
+            <form id="duty-form">
+                <div class="form-group">
+                    <label>วันที่ (Date)</label>
+                    <input type="date" id="duty-date" required>
+                </div>
+                <div class="form-group">
+                    <label>Ward (เวรวอร์ด)</label>
+                    <input type="text" id="duty-ward" placeholder="เช่น Nontapat">
+                </div>
+                <div class="form-group">
+                    <label>ER (เวรห้องฉุกเฉิน)</label>
+                    <input type="text" id="duty-er" placeholder="เช่น Natapol">
+                </div>
+                <button type="submit" class="btn btn-submit">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Create User -->
+    <div id="create-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="window.closeModal('create-user-modal')">&times;</span>
+            <h2 style="color: #8e44ad;"><i class="fas fa-user-plus"></i> เพิ่มผู้ใช้ใหม่ (Add Staff)</h2>
+            <form id="create-user-form">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="new-username" placeholder="เช่น resident1" required pattern="[a-zA-Z0-9_]+">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="text" id="new-password" placeholder="อย่างน้อย 6 ตัวอักษร" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-submit" style="background-color: #8e44ad;">สร้างบัญชี</button>
+                <div id="create-user-msg" style="margin-top:10px; font-size:0.9em;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 4: Change Password -->
+    <div id="change-password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="window.closeModal('change-password-modal')">&times;</span>
+            <h2><i class="fas fa-key"></i> เปลี่ยนรหัสผ่าน</h2>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label>รหัสผ่านใหม่ (New Password)</label>
+                    <input type="password" id="new-self-password" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-submit" style="background-color: #f39c12;">บันทึกรหัสผ่านใหม่</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 5: Settings -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="window.closeModal('settings-modal')">&times;</span>
+            <h2 style="color: #34495e;"><i class="fas fa-cog"></i> ตั้งค่า Dropdown</h2>
+            <p style="color:#666; font-size:0.9em; margin-bottom:15px;">แก้ไขรายชื่อ (พิมพ์ 1 ชื่อต่อ 1 บรรทัด)</p>
             
-            const collectionRef = getRecordsCollectionRef();
-            const q = query(collectionRef, orderBy("timestamp", "desc")); 
-
-            onSnapshot(q, (snapshot) => {
-                loadingMessage.classList.add('hidden');
+            <form id="settings-form">
+                <div class="form-group">
+                    <label>รายชื่อ Wards</label>
+                    <textarea id="settings-wards" rows="4" placeholder=""></textarea>
+                </div>
                 
-                if (snapshot.empty) {
-                    recordsList.innerHTML = '';
-                    document.getElementById('noRecordsMessage').classList.remove('hidden');
-                    return;
-                }
+                <!-- เพิ่มช่อง Attending -->
+                <div class="form-group">
+                    <label>รายชื่อ Attending (Staff)</label>
+                    <textarea id="settings-attendings" rows="4" placeholder=""></textarea>
+                </div>
 
-                document.getElementById('noRecordsMessage').classList.add('hidden');
-                let htmlContent = '';
-                snapshot.forEach((doc) => {
-                    const record = doc.data();
-                    htmlContent += createRecordCard(record, doc.id);
-                });
-                
-                recordsList.innerHTML = htmlContent;
-            }, (error) => {
-                console.error("Error listening to collection:", error);
-                loadingMessage.textContent = `${currentLang === 'th' ? 'เกิดข้อผิดพลาดในการโหลด' : 'Error loading data'}: ${error.message}`;
-            });
-        }
+                <div class="form-group">
+                    <label>รายชื่อ Owner (แพทย์เจ้าของไข้)</label>
+                    <textarea id="settings-owners" rows="6" placeholder=""></textarea>
+                </div>
+                <button type="submit" class="btn btn-submit" style="background-color: #34495e;">บันทึกการตั้งค่า</button>
+            </form>
+        </div>
+    </div>
 
-        // ------------------ EVENT LISTENERS & INITIALIZATION ------------------
+    <!-- Footer -->
+    <div style="text-align: center; margin-top: 40px; margin-bottom: 20px; color: #999; font-size: 14px; font-weight: 500;">
+        Powered by nontapatni 😘
+    </div>
 
-        function handleLogout() {
-            signOut(auth).catch((error) => {
-                console.error("Logout Error:", error);
-            });
-            // onAuthStateChanged จะจัดการเปลี่ยนหน้าจอโดยอัตโนมัติ
-        }
-
-        function handleToggleMode() {
-            isSignUpMode = !isSignUpMode;
-            showMessage(authMessage, "", "hidden");
-            updateUI();
-        }
-        
-        function handleLangToggle() {
-            currentLang = currentLang === 'th' ? 'en' : 'th';
-            updateUI();
-        }
-
-        langToggle.addEventListener('click', handleLangToggle);
-        authForm.addEventListener('submit', handleAuth);
-        toggleMode.addEventListener('click', handleToggleMode);
-        logoutButton.addEventListener('click', handleLogout);
-        recordForm.addEventListener('submit', saveRecord);
-
-        recordsList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-btn')) {
-                const docId = e.target.getAttribute('data-id');
-                if (docId) {
-                    deleteRecord(docId);
-                }
-            }
-        });
-        
-        // Initial setup
-        document.addEventListener('DOMContentLoaded', () => {
-            // Set initial language and UI texts
-            updateUI(); 
-            // Set today's date
-            document.getElementById('recordDate').valueAsDate = new Date();
-            // Start Firebase Auth listener
-            initializeAppAndAuth();
-        });
-
-    </script>
+    <!-- Link to external JS -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
